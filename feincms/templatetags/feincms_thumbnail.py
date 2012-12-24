@@ -1,9 +1,11 @@
 # ------------------------------------------------------------------------
 # coding=utf-8
 # ------------------------------------------------------------------------
-
 import re
-from cStringIO import StringIO
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO
 # Try to import PIL in either of the two ways it can end up installed.
 try:
     from PIL import Image
@@ -14,12 +16,23 @@ except ImportError:
         # Django seems to silently swallow the ImportError under certain
         # circumstances. Raise a generic exception explaining why we are
         # unable to proceed.
-        raise Exception, 'FeinCMS requires PIL to be installed'
+        raise Exception('FeinCMS requires PIL to be installed')
 
 from django import template
-from django.utils.encoding import force_unicode
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
+try:
+    from django.utils.six import PY3
+except ImportError:
+    PY3 = False
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 
 from feincms import settings
 
@@ -37,7 +50,7 @@ class Thumbnailer(object):
 
     @property
     def url(self):
-        return unicode(self)
+        return text_type(self)
 
     def __unicode__(self):
         match = self.THUMBNAIL_SIZE_RE.match(self.size)
@@ -56,7 +69,7 @@ class Thumbnailer(object):
         if hasattr(self.filename, 'name'):
             filename = self.filename.name
         else:
-            filename = force_unicode(self.filename)
+            filename = force_text(self.filename)
 
         # defining the filename and the miniature filename
         try:
@@ -93,6 +106,13 @@ class Thumbnailer(object):
                 miniature=miniature)
 
         return storage.url(miniature)
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf8')
 
     def generate(self, storage, original, size, miniature):
         try:

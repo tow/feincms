@@ -1,3 +1,5 @@
+import sys
+
 from django.http import Http404
 from django.template import Template
 from django.utils.cache import add_never_cache_headers
@@ -61,7 +63,8 @@ class HandlerBase(TemplateView):
                     successful = r
                 elif r:
                     return r
-            except Http404, e:
+            except Http404:
+                _, e, _ = sys.exc_info()
                 http404 = e
 
         if not successful:
@@ -108,7 +111,8 @@ class Handler(HandlerBase):
     def handler(self, request, *args, **kwargs):
         try:
             return super(Handler, self).handler(request, *args, **kwargs)
-        except Http404, e:
+        except Http404:
+            _, e, _ = sys.exc_info()
             if settings.FEINCMS_CMS_404_PAGE:
                 try:
                     request.original_path_info = request.path_info

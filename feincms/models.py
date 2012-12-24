@@ -4,7 +4,7 @@ This is the core of FeinCMS
 All models defined here are abstract, which means no tables are created in
 the feincms\_ namespace.
 """
-
+from functools import reduce
 import operator
 import warnings
 
@@ -17,7 +17,18 @@ from django.db.models.loading import get_model
 from django.forms.widgets import Media
 from django.template.loader import render_to_string
 from django.utils.datastructures import SortedDict
-from django.utils.encoding import force_unicode
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
+try:
+    from django.utils.six import PY3
+except ImportError:
+    PY3 = False
+try:
+    from django.utils.six import string_types
+except ImportError:
+    string_types = basestring
 from django.utils.translation import ugettext_lazy as _
 
 from feincms import ensure_completely_loaded
@@ -37,7 +48,14 @@ class Region(object):
         self._content_types = []
 
     def __unicode__(self):
-        return force_unicode(self.title)
+        return force_text(self.title)
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf-8')
 
     @property
     def content_types(self):
@@ -75,7 +93,14 @@ class Template(object):
         self.regions_dict = dict((r.key, r) for r in self.regions)
 
     def __unicode__(self):
-        return force_unicode(self.title)
+        return force_text(self.title)
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf-8')
 
 
 class ContentProxy(object):
@@ -206,7 +231,7 @@ class ContentProxy(object):
                     contents.setdefault(instance.region, []).append(instance)
 
             self._cache['regions'] = dict((region, sorted(instances, key=lambda c: c.ordering))\
-                for region, instances in contents.iteritems())
+                for region, instances in contents.items())
         return self._cache['regions']
 
     def all_of_type(self, type_or_tuple):
@@ -217,7 +242,7 @@ class ContentProxy(object):
         """
 
         content_list = []
-        if not hasattr(type_or_tuple, '__iter__'):
+        if not hasattr(type_or_tuple, '__iter__') and not hasattr(type_or_tuple, '__next__'):
             type_or_tuple = (type_or_tuple,)
         self._popuplate_content_type_caches(type_or_tuple)
 
@@ -301,7 +326,7 @@ class ExtensionsMixin(object):
                 continue
 
             fn = None
-            if isinstance(ext, basestring):
+            if isinstance(ext, string_types):
                 try:
                     fn = get_object(ext + '.register')
                 except ImportError:
@@ -321,8 +346,8 @@ class ExtensionsMixin(object):
                             pass
 
                 if not fn:
-                    raise ImproperlyConfigured, '%s is not a valid extension for %s' % (
-                        ext, cls.__name__)
+                    raise ImproperlyConfigured('%s is not a valid extension for %s' % (
+                        ext, cls.__name__))
 
             # Not a string, maybe a callable?
             elif hasattr(ext, '__call__'):
@@ -482,6 +507,13 @@ def create_base_model(inherit_from=models.Model):
 
             def __unicode__(self):
                 return u'%s on %s, ordering %s' % (self.region, self.parent, self.ordering)
+
+            def __str__(self):
+                text = self.__unicode__()
+                if PY3:
+                    return text
+                else:
+                    return text.encode('utf8')
 
             def render(self, **kwargs):
                 """
@@ -653,7 +685,7 @@ def create_base_model(inherit_from=models.Model):
                     RuntimeWarning)
 
             if not model._meta.abstract:
-                raise ImproperlyConfigured, 'Cannot create content type from non-abstract model (yet).'
+                raise ImproperlyConfigured('Cannot create content type from non-abstract model (yet).')
 
             if not hasattr(cls, '_feincms_content_model'):
                 cls._create_content_base()
@@ -761,9 +793,9 @@ def create_base_model(inherit_from=models.Model):
             # helper which can be used to ensure that either register_regions or
             # register_templates has been executed before proceeding
             if not hasattr(cls, 'template'):
-                raise ImproperlyConfigured, 'You need to register at least one template or one region on %s.' % (
+                raise ImproperlyConfigured('You need to register at least one template or one region on %s.' % (
                     cls.__name__,
-                    )
+                    ))
 
         @classmethod
         def _needs_content_types(cls):
@@ -771,7 +803,7 @@ def create_base_model(inherit_from=models.Model):
 
             # Check whether any content types have been created for this base class
             if not hasattr(cls, '_feincms_content_types') or not cls._feincms_content_types:
-                raise ImproperlyConfigured, 'You need to create at least one content type for the %s model.' % (cls.__name__)
+                raise ImproperlyConfigured('You need to create at least one content type for the %s model.' % (cls.__name__))
 
         def copy_content_from(self, obj):
             """

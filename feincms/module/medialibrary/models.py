@@ -6,12 +6,21 @@ from __future__ import absolute_import
 
 import os
 import re
+import sys
 
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
 from django.template.defaultfilters import slugify
 from django.utils import timezone
+try:
+    from django.utils.six import PY3
+except ImportError:
+    PY3 = False
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 from django.utils.translation import ugettext_lazy as _
 
 from feincms import settings
@@ -56,6 +65,13 @@ class Category(models.Model):
             return u'%s - %s' % (self.parent.title, self.title)
 
         return self.title
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf8')
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -137,10 +153,17 @@ class MediaFileBase(models.Model, ExtensionsMixin, TranslatedObjectMixin):
             pass
 
         if trans:
-            trans = unicode(trans)
+            trans = text_type(trans)
             if trans.strip():
                 return trans
         return os.path.basename(self.file.name)
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf8')
 
     def get_absolute_url(self):
         return self.file.url
@@ -172,7 +195,8 @@ class MediaFileBase(models.Model, ExtensionsMixin, TranslatedObjectMixin):
         if self.file:
             try:
                 self.file_size = self.file.size
-            except (OSError, IOError, ValueError), e:
+            except (OSError, IOError, ValueError):
+                _, e, _ = sys.exc_info()
                 logger.error("Unable to read file size for %s: %s" % (self, e))
 
         super(MediaFileBase, self).save(*args, **kwargs)
@@ -193,7 +217,8 @@ class MediaFileBase(models.Model, ExtensionsMixin, TranslatedObjectMixin):
             name = self.file.name
         try:
             self.file.storage.delete(name)
-        except Exception, e:
+        except Exception:
+            _, e, _ = sys.exc_info()
             logger.warn("Cannot delete media file %s: %s" % (name, e))
 
 # ------------------------------------------------------------------------
@@ -241,6 +266,13 @@ class MediaFileTranslation(Translation(MediaFile)):
 
     def __unicode__(self):
         return self.caption
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf8')
 
 #-------------------------------------------------------------------------
 #-------------------------------------------------------------------------

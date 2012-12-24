@@ -12,6 +12,10 @@ from django.db import models
 from django.http import HttpResponse
 from django.utils.functional import curry as partial, wraps
 from django.utils.safestring import mark_safe
+try:
+    from django.utils.six import string_types
+except ImportError:
+    string_types = basestring
 from django.utils.translation import ugettext_lazy as _
 
 from feincms import settings
@@ -218,7 +222,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None, *vargs,
           {% url "registration.urls/auth_logout" %}
     """
 
-    if isinstance(viewname, basestring) and APPLICATIONCONTENT_RE.match(viewname):
+    if isinstance(viewname, string_types) and APPLICATIONCONTENT_RE.match(viewname):
         # try to reverse an URL inside another applicationcontent
         other_urlconf, other_viewname = viewname.split('/')
 

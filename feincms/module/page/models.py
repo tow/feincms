@@ -10,6 +10,14 @@ from django.db import models
 from django.db.models import Q, signals
 from django.http import Http404
 from django.utils.datastructures import SortedDict
+try:
+    from django.utils.six import PY3
+except ImportError:
+    PY3 = False
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import commit_on_success
 
@@ -166,6 +174,13 @@ class Page(create_base_model(MPTTModel)):
     def __unicode__(self):
         return self.short_title()
 
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf8')
+
     def is_active(self):
         """
         Check whether this page and all its ancestors are active
@@ -276,7 +291,7 @@ class Page(create_base_model(MPTTModel)):
         Return a string that may be used as cache key for the current page.
         The cache_key is unique for each content type and content instance.
         """
-        return '-'.join(unicode(fn(self)) for fn in self.cache_key_components)
+        return '-'.join(text_type(fn(self)) for fn in self.cache_key_components)
 
     def etag(self, request):
         """
@@ -335,7 +350,7 @@ class Page(create_base_model(MPTTModel)):
                     request.path),
                 })
 
-        for fn in reversed(self.request_processors.values()):
+        for fn in reversed(list(self.request_processors.values())):
             r = fn(self, request)
             if r:
                 self._setup_request_result = r

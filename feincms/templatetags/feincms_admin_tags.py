@@ -1,5 +1,8 @@
 from django import template
-
+try:
+    from django.utils.six import string_types
+except ImportError:
+    string_types = basestring
 
 register = template.Library()
 
@@ -21,7 +24,7 @@ def post_process_fieldsets(fieldset):
     def _filter_recursive(fields):
         ret = []
         for f in fields:
-            if hasattr(f, '__iter__'):
+            if not isinstance(f, string_types) and hasattr(f, '__iter__') or hasattr(f, '__next__'):
                 # Several fields on one line
                 sub = _filter_recursive(f)
                 # Only add if there's at least one field left

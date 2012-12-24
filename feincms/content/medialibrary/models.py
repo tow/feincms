@@ -103,10 +103,10 @@ class MediaFileContent(models.Model):
                 ' Use feincms.content.medialibrary.v2.MediaFileContent instead.',
             DeprecationWarning, stacklevel=2)
         if 'feincms.module.medialibrary' not in settings.INSTALLED_APPS:
-            raise ImproperlyConfigured, 'You have to add \'feincms.module.medialibrary\' to your INSTALLED_APPS before creating a %s' % cls.__name__
+            raise ImproperlyConfigured('You have to add \'feincms.module.medialibrary\' to your INSTALLED_APPS before creating a %s' % cls.__name__)
 
         if POSITION_CHOICES is None:
-            raise ImproperlyConfigured, 'You need to set POSITION_CHOICES when creating a %s' % cls.__name__
+            raise ImproperlyConfigured('You need to set POSITION_CHOICES when creating a %s' % cls.__name__)
 
         cls.add_to_class('mediafile', models.ForeignKey(MEDIAFILE_CLASS, verbose_name=_('media file'),
             related_name='%s_%s_set' % (cls._meta.app_label, cls._meta.module_name)

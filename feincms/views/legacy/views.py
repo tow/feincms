@@ -1,3 +1,5 @@
+import sys
+
 from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -53,7 +55,8 @@ class Handler(object):
                     successful = r
                 elif r:
                     return r
-            except Http404, e:
+            except Http404:
+                _, e, _ = sys.exc_info()
                 http404 = e
 
         if not successful:

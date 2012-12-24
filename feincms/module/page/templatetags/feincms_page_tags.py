@@ -313,7 +313,7 @@ register.tag('feincms_translatedpage_or_base', do_simple_assignment_node_with_va
 # ------------------------------------------------------------------------
 @register.filter
 def feincms_translated_or_base(pages, language=None):
-    if not hasattr(pages, '__iter__'):
+    if not hasattr(pages, '__iter__') and not hasattr(pages, '__next__'):
         pages = [ pages ]
     for page in pages:
         yield _translate_page_into(page, language, default=page.get_original_translation)

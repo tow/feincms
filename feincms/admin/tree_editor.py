@@ -6,7 +6,9 @@ try:
     import json
 except ImportError:
     from django.utils import simplejson as json  # Python 2.5
+from functools import reduce
 import logging
+import sys
 
 from django.conf import settings as django_settings
 from django.contrib import admin
@@ -14,6 +16,10 @@ from django.contrib.admin.views import main
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponseServerError
 from django.utils.safestring import mark_safe
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 from django.utils.translation import ugettext_lazy as _, ugettext
 
 from mptt.exceptions import InvalidMove
@@ -59,7 +65,7 @@ def _build_tree_structure(cls):
         all_nodes[p_id] = []
 
         if parent_id:
-            if not all_nodes.has_key(parent_id):
+            if parent_id not in all_nodes:
                 # This happens very rarely, but protect against parents that
                 # we have yet to iteratove over.
                 all_nodes[parent_id] = []
@@ -84,7 +90,7 @@ def ajax_editable_boolean_cell(item, attr, text='', override=None):
     (useful for "disabled and you can't change it" situations).
     """
     if text:
-        text = '&nbsp;(%s)' % unicode(text)
+        text = '&nbsp;(%s)' % text_type(text)
 
     if override is not None:
         a = [ django_boolean_icon(override, text), text ]
@@ -100,7 +106,7 @@ def ajax_editable_boolean_cell(item, attr, text='', override=None):
 
     a.insert(0, '<div id="wrap_%s_%d">' % ( attr, item.pk ))
     a.append('</div>')
-    return unicode(''.join(a))
+    return text_type(''.join(a))
 
 # ------------------------------------------------------------------------
 def ajax_editable_boolean(attr, short_description):
@@ -223,7 +229,7 @@ class TreeEditor(admin.ModelAdmin):
         if hasattr(item, 'short_title'):
             r += item.short_title()
         else:
-            r += unicode(item)
+            r += text_type(item)
 #        r += '</span>'
         return mark_safe(r)
     indented_short_title.short_description = _('title')
@@ -284,7 +290,7 @@ class TreeEditor(admin.ModelAdmin):
 
         self._collect_editable_booleans()
 
-        if not self._ajax_editable_booleans.has_key(attr):
+        if attr not in self._ajax_editable_booleans:
             return HttpResponseBadRequest("not a valid attribute %s" % attr)
 
         try:
@@ -393,8 +399,9 @@ class TreeEditor(admin.ModelAdmin):
         if position in ('last-child', 'left'):
             try:
                 tree_manager.move_node(cut_item, pasted_on, position)
-            except InvalidMove, e:
-                self.message_user(request, unicode(e))
+            except InvalidMove:
+                _, e, _ = sys.exc_info()
+                self.message_user(request, text_type(e))
                 return HttpResponse('FAIL')
 
             # Ensure that model save has been run
