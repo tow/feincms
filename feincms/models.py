@@ -5,6 +5,7 @@ All models defined here are abstract, which means no tables are created in
 the feincms\_ namespace.
 """
 
+from functools import reduce
 import operator
 import warnings
 
@@ -21,6 +22,10 @@ try:
     from django.utils.encoding import force_text
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
+try:
+    from django.utils.six import PY3
+except ImportError:
+    PY3 = False
 from django.utils.translation import ugettext_lazy as _
 
 from feincms import ensure_completely_loaded
@@ -42,6 +47,13 @@ class Region(object):
 
     def __unicode__(self):
         return force_text(self.title)
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf-8')
 
     @property
     def content_types(self):
@@ -81,6 +93,13 @@ class Template(object):
 
     def __unicode__(self):
         return force_text(self.title)
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf-8')
 
 
 class ContentProxy(object):
@@ -225,7 +244,7 @@ class ContentProxy(object):
             self._cache['regions'] = dict((
                 region,
                 sorted(instances, key=lambda c: c.ordering),
-                ) for region, instances in contents.iteritems())
+                ) for region, instances in contents.items())
 
         return self._cache['regions']
 
@@ -241,7 +260,7 @@ class ContentProxy(object):
         """
 
         content_list = []
-        if not hasattr(type_or_tuple, '__iter__'):
+        if not hasattr(type_or_tuple, '__iter__') and not hasattr(type_or_tuple, '__next__'):
             type_or_tuple = (type_or_tuple,)
         self._popuplate_content_type_caches(type_or_tuple)
 
@@ -440,6 +459,13 @@ def create_base_model(inherit_from=models.Model):
             def __unicode__(self):
                 return u'%s on %s, ordering %s' % (
                     self.region, self.parent, self.ordering)
+
+            def __str__(self):
+                text = self.__unicode__()
+                if PY3:
+                    return text
+                else:
+                    return text.encode('utf8')
 
             def render(self, **kwargs):
                 """

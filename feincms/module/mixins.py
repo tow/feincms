@@ -1,3 +1,5 @@
+import sys
+
 from django.http import Http404
 from django.template import Template
 from django.utils.datastructures import SortedDict
@@ -167,7 +169,8 @@ class ContentObjectMixin(TemplateResponseMixin):
                     successful = r
                 elif r:
                     return r
-            except Http404, e:
+            except Http404:
+                _, e, _ = sys.exc_info()
                 http404 = e
 
         if not successful:

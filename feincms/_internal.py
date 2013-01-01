@@ -49,7 +49,7 @@ def monkeypatch_class(name, bases, namespace):
 
     assert len(bases) == 1, "Exactly one base class required"
     base = bases[0]
-    for name, value in namespace.iteritems():
+    for name, value in namespace.items():
         if name != "__metaclass__":
             setattr(base, name, value)
     return base

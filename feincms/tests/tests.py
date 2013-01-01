@@ -13,6 +13,10 @@ from feincms.module.blog.models import Entry
 from feincms.module.page import processors
 from feincms.module.page.models import Page
 from feincms.utils import collect_dict_values, get_object
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 
 # ------------------------------------------------------------------------
 class Empty(object):
@@ -45,7 +49,7 @@ class ModelsTest(TestCase):
 
         # I'm not sure whether this test tests anything at all
         self.assertEqual(r.key, t.regions[0].key)
-        self.assertEqual(unicode(r), 'region title')
+        self.assertEqual(text_type(r), 'region title')
 
 
 class UtilsTest(TestCase):

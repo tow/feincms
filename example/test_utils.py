@@ -17,15 +17,15 @@ class CoverageRunner(DjangoTestSuiteRunner):
 
         if run_with_coverage:
             coverage.stop()
-            print ''
-            print '----------------------------------------------------------------------'
-            print ' Unit Test Code Coverage Results'
-            print '----------------------------------------------------------------------'
+            print('')
+            print('----------------------------------------------------------------------')
+            print(' Unit Test Code Coverage Results')
+            print('----------------------------------------------------------------------')
             coverage_modules = []
             for module in settings.COVERAGE_MODULES:
                 coverage_modules.append(__import__(module, globals(),
                                                    locals(), ['']))
             coverage.report(coverage_modules, show_missing=1)
-            print '----------------------------------------------------------------------'
+            print('----------------------------------------------------------------------')
 
         return result

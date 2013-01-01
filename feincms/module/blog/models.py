@@ -8,6 +8,10 @@ It does work, though.
 from django.db import models
 from django.db.models import signals
 from django.utils import timezone
+try:
+    from django.utils.six import PY3
+except ImportError:
+    PY3 = False
 from django.utils.translation import ugettext_lazy as _
 
 from feincms.admin import item_editor
@@ -43,6 +47,13 @@ class Entry(Base):
 
     def __unicode__(self):
         return self.title
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf8')
 
     def save(self, *args, **kwargs):
         if self.published and not self.published_on:

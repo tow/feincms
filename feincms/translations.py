@@ -35,6 +35,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.utils import translation
+try:
+    from django.utils.six import PY3
+except ImportError:
+    PY3 = False
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 from django.utils.translation import ugettext_lazy as _
 
 from feincms.utils import queryset_transform
@@ -186,11 +194,11 @@ class TranslatedObjectMixin(object):
         if not language_code:
             language_code = translation.get_language()
         return (('FEINCMS:%d:XLATION:' % getattr(settings, 'SITE_ID', 0)) +
-                '-'.join(['%s' % s for s in
+                '-'.join(['%s' % s for s in (
                         self._meta.db_table,
                         self.id,
                         language_code,
-                        ]))
+                        )]))
 
     def get_translation(self, language_code=None):
         if not language_code:
@@ -231,9 +239,16 @@ class TranslatedObjectMixin(object):
             return self.__class__.__name__
 
         if translation:
-            return unicode(translation)
+            return text_type(translation)
 
         return self.__class__.__name__
+
+    def __str__(self):
+        text = self.__unicode__()
+        if PY3:
+            return text
+        else:
+            return text.encode('utf8')
 
     def get_absolute_url(self):
         return self.translation.get_absolute_url()

@@ -7,6 +7,10 @@ import warnings
 
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
+try:
+    from django.utils.six import string_types
+except ImportError:
+    string_types = basestring
 
 from feincms.utils import get_object
 
@@ -50,7 +54,7 @@ class ExtensionsMixin(object):
 
             extension = None
 
-            if isinstance(ext, basestring):
+            if isinstance(ext, string_types):
                 paths = [ext, '%s.register' % ext] + [
                     '%s.%s.register' % (path, ext) for path in search_paths]
 

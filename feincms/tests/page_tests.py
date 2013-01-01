@@ -7,6 +7,7 @@ from __future__ import absolute_import
 from datetime import datetime, timedelta
 import os
 import re
+import sys
 
 
 from django import forms, template
@@ -22,6 +23,10 @@ from django.template import TemplateDoesNotExist
 from django.template.defaultfilters import slugify
 from django.test import TestCase
 from django.utils import timezone
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 
 from feincms import settings as feincms_settings
 from feincms.content.application.models import _empty_reverse_cache, app_reverse
@@ -118,7 +123,8 @@ class PagesTestCase(TestCase):
     def is_published(self, url, should_be=True):
         try:
             self.client.get(url)
-        except TemplateDoesNotExist, e:
+        except TemplateDoesNotExist:
+            _, e, _ = sys.exc_info()
             if should_be:
                 if e.args != ('feincms_base.html',):
                     raise
@@ -359,7 +365,7 @@ class PagesTestCase(TestCase):
         self.assertEqual(len(page2.content.all_of_type(RawContent)), 1)
 
         self.assertEqual(page2.content.main[0].__class__.__name__, 'RawContent')
-        self.assertEqual(unicode(page2.content.main[0]),
+        self.assertEqual(text_type(page2.content.main[0]),
                          'main on Test page, ordering 0')
 
         self.assertEqual(len(page2.content.main), 1)
@@ -381,8 +387,8 @@ class PagesTestCase(TestCase):
         category = Category.objects.create(title='Category', parent=None)
         category2 = Category.objects.create(title='Something', parent=category)
 
-        self.assertEqual(unicode(category2), 'Category - Something')
-        self.assertEqual(unicode(category), 'Category')
+        self.assertEqual(text_type(category2), 'Category - Something')
+        self.assertEqual(text_type(category), 'Category')
 
         mediafile = MediaFile.objects.create(file='somefile.jpg')
         mediafile.categories = [category]
@@ -392,20 +398,20 @@ class PagesTestCase(TestCase):
             type='default',
             ordering=1)
 
-        self.assertEqual(unicode(mediafile), 'somefile.jpg')
+        self.assertEqual(text_type(mediafile), 'somefile.jpg')
 
         mediafile.translations.create(caption='something',
             language_code='%s-ha' % short_language_code())
         mediafile.purge_translation_cache()
 
-        self.assertTrue('something' in unicode(mediafile))
+        self.assertTrue('something' in text_type(mediafile))
 
         mf = page.content.main[1].mediafile
 
         self.assertEqual(mf.translation.caption, 'something')
         self.assertEqual(mf.translation.short_language_code(), short_language_code())
         self.assertNotEqual(mf.get_absolute_url(), '')
-        self.assertEqual(unicode(mf), 'something')
+        self.assertEqual(text_type(mf), 'something')
         self.assertTrue(mf.type == 'image')
 
         self.assertEqual(MediaFile.objects.only_language('de').count(), 0)
@@ -1000,7 +1006,8 @@ class PagesTestCase(TestCase):
         # page2 has been modified too, but its URL should not have changed
         try:
             self.assertRedirects(self.client.get('/blablabla/'), page1.get_absolute_url())
-        except TemplateDoesNotExist, e:
+        except TemplateDoesNotExist:
+            _, e, _ = sys.exc_info()
             # catch the error from rendering page1
             if e.args != ('feincms_base.html',):
                 raise

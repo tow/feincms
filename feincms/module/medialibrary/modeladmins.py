@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
 from django import forms
 from django.conf import settings as django_settings
@@ -83,7 +84,8 @@ def save_as_zipfile(modeladmin, request, queryset):
     try:
         zip_name = export_zipfile(site, queryset)
         messages.info(request, _("ZIP file exported as %s") % zip_name)
-    except Exception, e:
+    except Exception:
+        _, e, _ = sys.exc_info()
         messages.error(request, _("ZIP file export failed: %s") % str(e))
         return
 
@@ -157,7 +159,8 @@ class MediaFileAdmin(admin.ModelAdmin):
                 d = get_image_dimensions(obj.file.file)
                 if d:
                     t += " %d&times;%d" % ( d[0], d[1] )
-            except (IOError, ValueError), e:
+            except (IOError, ValueError):
+                _, e, _ = sys.exc_info()
                 t += " (%s)" % e.strerror
         return t
     file_type.admin_order_field = 'type'
@@ -195,7 +198,8 @@ class MediaFileAdmin(admin.ModelAdmin):
             try:
                 count = import_zipfile(request.POST.get('category'), request.POST.get('overwrite', False), request.FILES['data'])
                 messages.info(request, _("%d files imported") % count)
-            except Exception, e:
+            except Exception:
+                _, e, _ = sys.exc_info()
                 messages.error(request, _("ZIP import failed: %s") % str(e))
         else:
             messages.error(request, _("No input file given"))

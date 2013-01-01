@@ -10,6 +10,10 @@ try:
 except ImportError:
     from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
+try:
+    from django.utils.six import text_type
+except ImportError:
+    text_type = unicode
 from django.utils.translation import ugettext as _
 
 
@@ -60,7 +64,7 @@ class CategoryFieldListFilter(ChoicesFieldListFilter):
 
         # Restrict results to categories which are actually in use:
         self.lookup_choices = [
-            (i.pk, unicode(i)) for i in f.related.parent_model.objects.exclude(**{
+            (i.pk, text_type(i)) for i in f.related.parent_model.objects.exclude(**{
                 f.related.var_name: None
             })
         ]

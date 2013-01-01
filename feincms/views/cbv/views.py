@@ -1,3 +1,5 @@
+import sys
+
 from django.db.models import get_model
 from django.http import Http404
 
@@ -24,7 +26,8 @@ class Handler(ContentView):
     def dispatch(self, request, *args, **kwargs):
         try:
             return super(Handler, self).dispatch(request, *args, **kwargs)
-        except Http404, e:
+        except Http404:
+            _, e, _ = sys.exc_info()
             if settings.FEINCMS_CMS_404_PAGE:
                 try:
                     request.original_path_info = request.path_info
