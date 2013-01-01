@@ -5,7 +5,10 @@
 #          Guilherme M. Gondim (semente) <semente at taurinus.org>
 
 from django.contrib.admin.filters import FieldListFilter, ChoicesFieldListFilter
-from django.utils.encoding import smart_unicode
+try:
+    from django.utils.encoding import smart_unicode as smart_text
+except ImportError:
+    from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
@@ -39,7 +42,7 @@ class ParentFieldListFilter(ChoicesFieldListFilter):
             yield {
                 'selected':     pk == int(self.lookup_val or '0'),
                 'query_string': cl.get_query_string({self.lookup_kwarg: pk}),
-                'display':      mark_safe(smart_unicode(title))
+                'display':      mark_safe(smart_text(title))
             }
 
     def title(self):
@@ -74,7 +77,7 @@ class CategoryFieldListFilter(ChoicesFieldListFilter):
             yield {
                 'selected':     pk == int(self.lookup_val or '0'),
                 'query_string': cl.get_query_string({self.lookup_kwarg: pk}),
-                'display':      mark_safe(smart_unicode(title))
+                'display':      mark_safe(smart_text(title))
             }
 
     def title(self):

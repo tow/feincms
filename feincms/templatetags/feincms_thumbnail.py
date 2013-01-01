@@ -17,9 +17,12 @@ except ImportError:
         raise Exception, 'FeinCMS requires PIL to be installed'
 
 from django import template
-from django.utils.encoding import force_unicode
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 
 from feincms import settings
 
@@ -56,7 +59,7 @@ class Thumbnailer(object):
         if hasattr(self.filename, 'name'):
             filename = self.filename.name
         else:
-            filename = force_unicode(self.filename)
+            filename = force_text(self.filename)
 
         # defining the filename and the miniature filename
         try:
